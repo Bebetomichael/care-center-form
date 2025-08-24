@@ -470,13 +470,12 @@
 
         // --- Event Listeners ---
         
-        // 1. Populate the initial CMDCare dropdown on page load
-        window.onload = () => {
-            const cmdCareOptions = Object.keys(careData);
-            populateDropdown(cmdCareSelect, cmdCareOptions);
-        };
+        // Fix: Populating the CMDCare dropdown immediately on script load.
+        // This is a more reliable way to ensure the dropdown is ready when the page is displayed.
+        const cmdCareOptions = Object.keys(careData);
+        populateDropdown(cmdCareSelect, cmdCareOptions);
         
-        // 2. Listen for changes on the CMDCare dropdown
+        // 1. Listen for changes on the CMDCare dropdown
         cmdCareSelect.addEventListener('change', (e) => {
             const selectedCmdCare = e.target.value;
             // Get the pastors for the selected CMDCare
@@ -491,7 +490,7 @@
             addressDisplay.classList.add('scale-95', 'opacity-0');
         });
 
-        // 3. Listen for changes on the PastorCare dropdown
+        // 2. Listen for changes on the PastorCare dropdown
         pastorCareSelect.addEventListener('change', (e) => {
             const selectedCmdCare = cmdCareSelect.value;
             const selectedPastor = e.target.value;
@@ -506,7 +505,7 @@
             addressDisplay.classList.add('scale-95', 'opacity-0');
         });
 
-        // 4. Listen for changes on the Care Center Name dropdown
+        // 3. Listen for changes on the Care Center Name dropdown
         careCenterNameSelect.addEventListener('change', (e) => {
             const selectedCmdCare = cmdCareSelect.value;
             const selectedPastor = pastorCareSelect.value;
@@ -521,7 +520,7 @@
             addressDisplay.classList.add('scale-100', 'opacity-100');
         });
         
-        // 5. Add a submit event listener to the form to handle data submission
+        // 4. Add a submit event listener to the form to handle data submission
         careForm.addEventListener('submit', async (e) => {
             // Prevent the default form submission behavior (reloading the page)
             e.preventDefault();
@@ -589,7 +588,7 @@
             }
         });
 
-        // 6. Handle button clicks to switch between form and reports view
+        // 5. Handle button clicks to switch between form and reports view
         viewReportsBtn.addEventListener('click', fetchAndDisplayReports);
         
         showFormBtn.addEventListener('click', () => {
