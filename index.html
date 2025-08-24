@@ -66,6 +66,7 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PastorCare</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Care Center</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="reportsTableBody" class="bg-white divide-y divide-gray-200">
@@ -202,9 +203,14 @@
             </div>
             
             <!-- Submit Button -->
-            <button type="submit" class="w-full mt-6 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300">
-                Submit Report
-            </button>
+            <div class="flex space-x-4">
+                <button type="submit" id="submitBtn" class="w-full mt-6 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300">
+                    Submit Report
+                </button>
+                <button type="button" id="cancelEditBtn" class="w-full mt-6 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-300 hidden">
+                    Cancel Edit
+                </button>
+            </div>
         </form>
 
         <!-- New section to display submitted data -->
@@ -217,7 +223,7 @@
     <script type="module">
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Global variables provided by the Canvas environment for Firebase
@@ -229,6 +235,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+
+        // Global variable to store the ID of the document being edited.
+        let editingDocId = null;
 
         // Authenticate the user and listen for state changes
         let userId;
@@ -399,6 +408,8 @@
         const reportsTableBody = document.getElementById('reportsTableBody');
         const showFormBtn = document.getElementById('showFormBtn');
         const viewReportsBtn = document.getElementById('viewReportsBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
 
         // Function to populate a dropdown with options
         function populateDropdown(selectElement, options) {
@@ -458,6 +469,9 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.pastorCare || 'N/A'}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.careCenterName || 'N/A'}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${totalAttendance}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                                <button data-doc-id="${doc.id}" class="edit-btn text-indigo-600 hover:text-indigo-900 transition-colors duration-200">Edit</button>
+                            </td>
                         `;
                         reportsTableBody.appendChild(row);
                     });
@@ -465,6 +479,72 @@
             } catch (e) {
                 console.error("Error fetching documents: ", e);
                 reportsMessage.textContent = "Error loading reports. Please try again later.";
+            }
+        }
+        
+        // Function to handle fetching a single report and populating the form for editing
+        async function editReport(docId) {
+            if (!userId) {
+                console.error("User not authenticated. Cannot edit report.");
+                return;
+            }
+
+            try {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/form-submissions`, docId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    
+                    // Populate form fields with the document data
+                    document.getElementById('meetingDate').value = data.meetingDate || '';
+                    document.getElementById('reportWeek').value = data.reportWeek || '';
+                    document.getElementById('maleCount').value = data.maleCount || 0;
+                    document.getElementById('femaleCount').value = data.femaleCount || 0;
+                    document.getElementById('childrenCount').value = data.childrenCount || 0;
+                    document.getElementById('mvpPresent').value = data.mvpPresent || 0;
+                    document.getElementById('soulsWon').value = data.soulsWon || 0;
+                    document.getElementById('offeringCash').value = data.offeringCash || 0;
+                    document.getElementById('offeringTransfer').value = data.offeringTransfer || 0;
+                    document.getElementById('treasurer').value = data.treasurer || '';
+                    document.getElementById('goals').value = data.goals || '';
+                    document.getElementById('metGoals').value = data.metGoals || '';
+
+                    // Handle dropdowns by setting their values
+                    cmdCareSelect.value = data.cmdCare;
+                    const pastorOptions = Object.keys(careData[data.cmdCare]);
+                    populateDropdown(pastorCareSelect, pastorOptions);
+                    pastorCareSelect.value = data.pastorCare;
+                    const careCenterOptions = Object.keys(careData[data.cmdCare][data.pastorCare]);
+                    populateDropdown(careCenterNameSelect, careCenterOptions);
+                    careCenterNameSelect.value = data.careCenterName;
+                    addressText.textContent = data.address;
+                    addressDisplay.classList.remove('scale-95', 'opacity-0');
+                    addressDisplay.classList.add('scale-100', 'opacity-100');
+
+                    // Switch view to form and update button states
+                    reportViewContainer.classList.add('hidden');
+                    careForm.classList.remove('hidden');
+                    viewReportsBtn.classList.remove('hidden');
+                    showFormBtn.classList.add('hidden');
+                    submissionMessage.classList.add('hidden');
+
+                    // Change submit button to update button and show cancel
+                    submitBtn.textContent = 'Update Report';
+                    submitBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    submitBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cancelEditBtn.classList.remove('hidden');
+
+                    // Store the document ID for the update operation
+                    editingDocId = docId;
+
+                } else {
+                    console.log("No such document!");
+                    reportsMessage.textContent = "Error: Report not found.";
+                }
+            } catch (e) {
+                console.error("Error getting document:", e);
+                reportsMessage.textContent = "Error loading report for editing.";
             }
         }
 
@@ -543,8 +623,6 @@
                 treasurer: document.getElementById('treasurer').value,
                 goals: document.getElementById('goals').value,
                 metGoals: document.getElementById('metGoals').value,
-                // Add a timestamp to the data
-                timestamp: new Date().toISOString()
             };
             
             // Check if user is authenticated before saving
@@ -556,33 +634,32 @@
             }
 
             try {
-                // Construct the Firestore path for the new document
                 const collectionPath = `artifacts/${appId}/users/${userId}/form-submissions`;
-                
-                // Add the new document to the collection
-                const docRef = await addDoc(collection(db, collectionPath), formData);
-                
-                console.log("Document successfully written with ID: ", docRef.id);
-
-                // Update the submission message to include the Firestore document ID
-                let detailsHtml = '<ul>';
-                detailsHtml += `<li><strong>Document ID:</strong> ${docRef.id}</li>`;
-                for (const key in formData) {
-                    if (formData.hasOwnProperty(key)) {
-                        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-                        detailsHtml += `<li><strong>${label}:</strong> ${formData[key]}</li>`;
-                    }
+                if (editingDocId) {
+                    // Update existing document
+                    const docRef = doc(db, collectionPath, editingDocId);
+                    await updateDoc(docRef, formData);
+                    console.log("Document successfully updated with ID: ", editingDocId);
+                    submissionDetails.innerHTML = `<p>Report successfully <strong>updated</strong> with ID: ${editingDocId}</p>`;
+                } else {
+                    // Add new document
+                    const docRef = await addDoc(collection(db, collectionPath), formData);
+                    console.log("Document successfully written with ID: ", docRef.id);
+                    submissionDetails.innerHTML = `<p>Report successfully <strong>submitted</strong> with ID: ${docRef.id}</p>`;
                 }
-                detailsHtml += '</ul>';
-
-                submissionDetails.innerHTML = detailsHtml;
+                
                 submissionMessage.classList.remove('hidden');
-
-                // Reset the form after successful submission
+                
+                // Reset the form and editing state after successful submission/update
                 careForm.reset();
+                editingDocId = null;
+                submitBtn.textContent = 'Submit Report';
+                submitBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                submitBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+                cancelEditBtn.classList.add('hidden');
                 
             } catch (e) {
-                console.error("Error adding document: ", e);
+                console.error("Error adding/updating document: ", e);
                 submissionDetails.innerHTML = `<p class="text-red-500">Error: Failed to save report. Please check the console for details.</p>`;
                 submissionMessage.classList.remove('hidden');
             }
@@ -597,9 +674,38 @@
             showFormBtn.classList.add('hidden');
             viewReportsBtn.classList.remove('hidden');
             submissionMessage.classList.add('hidden');
+            
+            // Reset the form and editing state if coming from the report view
+            careForm.reset();
+            editingDocId = null;
+            submitBtn.textContent = 'Submit Report';
+            submitBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            submitBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+            cancelEditBtn.classList.add('hidden');
+            
+        });
+        
+        // 6. Event listener for the "Cancel Edit" button
+        cancelEditBtn.addEventListener('click', () => {
+            careForm.reset();
+            editingDocId = null;
+            submitBtn.textContent = 'Submit Report';
+            submitBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            submitBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+            cancelEditBtn.classList.add('hidden');
+            submissionMessage.classList.add('hidden');
+        });
+
+        // 7. Event delegation for the edit buttons inside the table
+        reportsTableBody.addEventListener('click', (e) => {
+            if (e.target.classList.contains('edit-btn')) {
+                const docId = e.target.dataset.docId;
+                editReport(docId);
+            }
         });
 
     </script>
 
 </body>
 </html>
+
