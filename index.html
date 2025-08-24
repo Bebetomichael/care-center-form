@@ -550,11 +550,6 @@
 
         // --- Event Listeners ---
         
-        // Fix: Populating the CMDCare dropdown immediately on script load.
-        // This is a more reliable way to ensure the dropdown is ready when the page is displayed.
-        const cmdCareOptions = Object.keys(careData);
-        populateDropdown(cmdCareSelect, cmdCareOptions);
-        
         // 1. Listen for changes on the CMDCare dropdown
         cmdCareSelect.addEventListener('change', (e) => {
             const selectedCmdCare = e.target.value;
@@ -704,8 +699,13 @@
             }
         });
 
+        // Use window.onload to ensure the DOM is fully loaded before populating the dropdown
+        window.onload = function() {
+            // Populate the CMDCare dropdown immediately on script load.
+            const cmdCareOptions = Object.keys(careData);
+            populateDropdown(cmdCareSelect, cmdCareOptions);
+        };
     </script>
 
 </body>
 </html>
-
