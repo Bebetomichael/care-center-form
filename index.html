@@ -33,13 +33,6 @@
 <body class="bg-blue-50 flex flex-col items-center justify-center min-h-screen p-4">
 
     <!-- Uploaded Image -->
-    <!--
-        To use your own image from GitHub, you need the direct link.
-        1. Upload the image to your repository.
-        2. Go to the image file on GitHub and click the "Download" button.
-        3. Copy the URL from your browser's address bar. This is your direct link.
-        4. Replace the placeholder URL below with your new link.
-    -->
     <img src="https://placehold.co/1200x400/8c8c8c/ffffff?text=Add+your+image+here" alt="Care Center Group" class="w-full max-w-2xl rounded-2xl shadow-xl mb-8">
     
     <!-- Instructions to add your own image -->
@@ -59,6 +52,36 @@
         <!-- Display User ID to help with Firestore debugging -->
         <div id="userIdDisplay" class="mb-4 text-center text-xs text-gray-400">
             User ID: <span id="userIdValue" class="font-mono">Loading...</span>
+        </div>
+
+        <!-- Section to view past reports -->
+        <div id="reportViewContainer" class="hidden mt-8 p-6 bg-gray-100 rounded-xl max-h-96 overflow-y-auto">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Past Reports</h2>
+            <div id="reportsMessage" class="text-center text-gray-500 mb-4"></div>
+            <table id="reportsTable" class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CMDCare</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PastorCare</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Care Center</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
+                    </tr>
+                </thead>
+                <tbody id="reportsTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Reports will be populated here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex justify-center space-x-4 mb-8">
+            <button id="showFormBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 hidden">
+                Show Form
+            </button>
+            <button id="viewReportsBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300">
+                View Past Reports
+            </button>
         </div>
 
         <form id="careForm" class="space-y-6">
@@ -194,8 +217,8 @@
     <script type="module">
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Global variables provided by the Canvas environment for Firebase
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -207,26 +230,28 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Authenticate the user
+        // Authenticate the user and listen for state changes
         let userId;
-        async function authenticateUser() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                // Once authenticated, get the user ID
-                userId = auth.currentUser.uid;
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userId = user.uid;
                 document.getElementById('userIdValue').textContent = userId;
                 console.log("User authenticated successfully with UID:", userId);
-            } catch (error) {
-                console.error("Error during authentication:", error);
-                document.getElementById('userIdValue').textContent = "Error";
+            } else {
+                console.log("No user is signed in. Signing in anonymously...");
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Error during authentication:", error);
+                    document.getElementById('userIdValue').textContent = "Error";
+                }
             }
-        }
-        authenticateUser();
-
+        });
+        
         // Data structure representing the provided information.
         // The data is organized hierarchically for easy access.
         const careData = {
@@ -360,7 +385,7 @@
             }
         };
 
-        // Get dropdown elements and the form from the DOM
+        // Get DOM elements
         const careForm = document.getElementById('careForm');
         const cmdCareSelect = document.getElementById('cmdCare');
         const pastorCareSelect = document.getElementById('pastorCare');
@@ -369,6 +394,11 @@
         const addressText = document.getElementById('addressText');
         const submissionMessage = document.getElementById('submissionMessage');
         const submissionDetails = document.getElementById('submissionDetails');
+        const reportViewContainer = document.getElementById('reportViewContainer');
+        const reportsMessage = document.getElementById('reportsMessage');
+        const reportsTableBody = document.getElementById('reportsTableBody');
+        const showFormBtn = document.getElementById('showFormBtn');
+        const viewReportsBtn = document.getElementById('viewReportsBtn');
 
         // Function to populate a dropdown with options
         function populateDropdown(selectElement, options) {
@@ -391,6 +421,51 @@
             });
             // Re-enable the dropdown
             selectElement.disabled = false;
+        }
+        
+        // Function to fetch and display past reports
+        async function fetchAndDisplayReports() {
+            if (!userId) {
+                reportsMessage.textContent = "Authentication in progress. Please wait...";
+                return;
+            }
+
+            reportsMessage.textContent = "Loading reports...";
+            reportsTableBody.innerHTML = ''; // Clear previous data
+            reportViewContainer.classList.remove('hidden');
+            careForm.classList.add('hidden');
+            showFormBtn.classList.remove('hidden');
+            viewReportsBtn.classList.add('hidden');
+            submissionMessage.classList.add('hidden');
+            
+            try {
+                const collectionPath = `artifacts/${appId}/users/${userId}/form-submissions`;
+                const q = query(collection(db, collectionPath));
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    reportsMessage.textContent = "No reports found. Submit a report to see it here.";
+                } else {
+                    reportsMessage.textContent = "";
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const totalAttendance = data.maleCount + data.femaleCount + data.childrenCount;
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-100 transition-colors duration-200';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.meetingDate || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.cmdCare || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.pastorCare || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.careCenterName || 'N/A'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${totalAttendance}</td>
+                        `;
+                        reportsTableBody.appendChild(row);
+                    });
+                }
+            } catch (e) {
+                console.error("Error fetching documents: ", e);
+                reportsMessage.textContent = "Error loading reports. Please try again later.";
+            }
         }
 
         // --- Event Listeners ---
@@ -513,6 +588,18 @@
                 submissionMessage.classList.remove('hidden');
             }
         });
+
+        // 6. Handle button clicks to switch between form and reports view
+        viewReportsBtn.addEventListener('click', fetchAndDisplayReports);
+        
+        showFormBtn.addEventListener('click', () => {
+            reportViewContainer.classList.add('hidden');
+            careForm.classList.remove('hidden');
+            showFormBtn.classList.add('hidden');
+            viewReportsBtn.classList.remove('hidden');
+            submissionMessage.classList.add('hidden');
+        });
+
     </script>
 
 </body>
