@@ -56,6 +56,11 @@
         <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Care Center Information</h1>
         <p class="text-center text-gray-500 mb-8">Select a CMDCare, Pastor, and Care Center to view its details.</p>
 
+        <!-- Display User ID to help with Firestore debugging -->
+        <div id="userIdDisplay" class="mb-4 text-center text-xs text-gray-400">
+            User ID: <span id="userIdValue" class="font-mono">Loading...</span>
+        </div>
+
         <form id="careForm" class="space-y-6">
 
             <!-- CMDCare Dropdown -->
@@ -186,7 +191,42 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Global variables provided by the Canvas environment for Firebase
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Authenticate the user
+        let userId;
+        async function authenticateUser() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                // Once authenticated, get the user ID
+                userId = auth.currentUser.uid;
+                document.getElementById('userIdValue').textContent = userId;
+                console.log("User authenticated successfully with UID:", userId);
+            } catch (error) {
+                console.error("Error during authentication:", error);
+                document.getElementById('userIdValue').textContent = "Error";
+            }
+        }
+        authenticateUser();
+
         // Data structure representing the provided information.
         // The data is organized hierarchically for easy access.
         const careData = {
@@ -407,7 +447,7 @@
         });
         
         // 5. Add a submit event listener to the form to handle data submission
-        careForm.addEventListener('submit', (e) => {
+        careForm.addEventListener('submit', async (e) => {
             // Prevent the default form submission behavior (reloading the page)
             e.preventDefault();
 
@@ -419,37 +459,59 @@
                 address: addressText.textContent,
                 meetingDate: document.getElementById('meetingDate').value,
                 reportWeek: document.getElementById('reportWeek').value,
-                maleCount: document.getElementById('maleCount').value,
-                femaleCount: document.getElementById('femaleCount').value,
-                childrenCount: document.getElementById('childrenCount').value,
-                mvpPresent: document.getElementById('mvpPresent').value,
-                soulsWon: document.getElementById('soulsWon').value,
-                offeringCash: document.getElementById('offeringCash').value,
-                offeringTransfer: document.getElementById('offeringTransfer').value,
+                maleCount: parseInt(document.getElementById('maleCount').value, 10),
+                femaleCount: parseInt(document.getElementById('femaleCount').value, 10),
+                childrenCount: parseInt(document.getElementById('childrenCount').value, 10),
+                mvpPresent: parseInt(document.getElementById('mvpPresent').value, 10),
+                soulsWon: parseInt(document.getElementById('soulsWon').value, 10),
+                offeringCash: parseInt(document.getElementById('offeringCash').value, 10),
+                offeringTransfer: parseInt(document.getElementById('offeringTransfer').value, 10),
                 treasurer: document.getElementById('treasurer').value,
                 goals: document.getElementById('goals').value,
-                metGoals: document.getElementById('metGoals').value
+                metGoals: document.getElementById('metGoals').value,
+                // Add a timestamp to the data
+                timestamp: new Date().toISOString()
             };
             
-            // Log the form data to the console for debugging
-            console.log("Form Data Submitted:", formData);
-
-            // Display a success message to the user with the collected data
-            let detailsHtml = '<ul>';
-            for (const key in formData) {
-                if (formData.hasOwnProperty(key)) {
-                    // Create a human-readable label for each key
-                    const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-                    detailsHtml += `<li><strong>${label}:</strong> ${formData[key]}</li>`;
-                }
+            // Check if user is authenticated before saving
+            if (!userId) {
+                console.error("User not authenticated. Data not saved to Firestore.");
+                submissionDetails.innerHTML = `<p class="text-red-500">Error: User not authenticated. Please try refreshing the page.</p>`;
+                submissionMessage.classList.remove('hidden');
+                return;
             }
-            detailsHtml += '</ul>';
 
-            submissionDetails.innerHTML = detailsHtml;
-            submissionMessage.classList.remove('hidden');
+            try {
+                // Construct the Firestore path for the new document
+                const collectionPath = `artifacts/${appId}/users/${userId}/form-submissions`;
+                
+                // Add the new document to the collection
+                const docRef = await addDoc(collection(db, collectionPath), formData);
+                
+                console.log("Document successfully written with ID: ", docRef.id);
 
-            // You would typically send this data to a server here.
-            // Example: fetch('/api/submit', { method: 'POST', body: JSON.stringify(formData) });
+                // Update the submission message to include the Firestore document ID
+                let detailsHtml = '<ul>';
+                detailsHtml += `<li><strong>Document ID:</strong> ${docRef.id}</li>`;
+                for (const key in formData) {
+                    if (formData.hasOwnProperty(key)) {
+                        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+                        detailsHtml += `<li><strong>${label}:</strong> ${formData[key]}</li>`;
+                    }
+                }
+                detailsHtml += '</ul>';
+
+                submissionDetails.innerHTML = detailsHtml;
+                submissionMessage.classList.remove('hidden');
+
+                // Reset the form after successful submission
+                careForm.reset();
+                
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                submissionDetails.innerHTML = `<p class="text-red-500">Error: Failed to save report. Please check the console for details.</p>`;
+                submissionMessage.classList.remove('hidden');
+            }
         });
     </script>
 
