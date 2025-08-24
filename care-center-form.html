@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Care Center Form</title>
+    <!-- Use the Inter font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* Custom scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <!-- Uploaded Image -->
+    <img src="http://googleusercontent.com/file_content/1" alt="Care Center Group" class="w-full max-w-2xl rounded-2xl shadow-xl mb-8">
+
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Care Center Information</h1>
+        <p class="text-center text-gray-500 mb-8">Select a CMDCare, Pastor, and Care Center to view its details.</p>
+
+        <form id="careForm" class="space-y-6">
+
+            <!-- CMDCare Dropdown -->
+            <div class="relative group">
+                <label for="cmdCare" class="block text-sm font-medium text-gray-700 mb-2">CMDCare</label>
+                <select id="cmdCare" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                    <option value="" selected disabled>Select CMDCare</option>
+                </select>
+            </div>
+
+            <!-- PastorCare Dropdown -->
+            <div class="relative group">
+                <label for="pastorCare" class="block text-sm font-medium text-gray-700 mb-2">PastorCare</label>
+                <select id="pastorCare" disabled class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <option value="" selected disabled>Select PastorCare</option>
+                </select>
+            </div>
+
+            <!-- Care Center Name Dropdown -->
+            <div class="relative group">
+                <label for="careCenterName" class="block text-sm font-medium text-gray-700 mb-2">Care Center Name</label>
+                <select id="careCenterName" disabled class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <option value="" selected disabled>Select Care Center Name</option>
+                </select>
+            </div>
+
+            <!-- Address Display Area -->
+            <div id="addressDisplay" class="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-xl transition-all duration-300 scale-95 opacity-0">
+                <h3 class="text-xl font-semibold text-blue-800 mb-2">Care Center Address</h3>
+                <p id="addressText" class="text-gray-700 text-lg break-words"></p>
+            </div>
+            
+            <!-- New Fields -->
+            <hr class="my-6 border-t border-gray-200" />
+
+            <!-- Date of Meeting/Service -->
+            <div class="relative group">
+                <label for="meetingDate" class="block text-sm font-medium text-gray-700 mb-2">Date of Meeting/Service</label>
+                <input type="date" id="meetingDate" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+            </div>
+
+            <!-- Report Week -->
+            <div class="relative group">
+                <label for="reportWeek" class="block text-sm font-medium text-gray-700 mb-2">Report Week</label>
+                <select id="reportWeek" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                    <option value="" selected disabled>Select week</option>
+                    <option value="Week 1">Week 1</option>
+                    <option value="Week 2">Week 2</option>
+                    <option value="Week 3">Week 3</option>
+                    <option value="Week 4">Week 4</option>
+                    <option value="Week 5">Week 5</option>
+                </select>
+            </div>
+
+            <!-- Attendance Numbers -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="relative group">
+                    <label for="maleCount" class="block text-sm font-medium text-gray-700 mb-2">Male</label>
+                    <input type="number" id="maleCount" min="0" value="0" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                </div>
+                <div class="relative group">
+                    <label for="femaleCount" class="block text-sm font-medium text-gray-700 mb-2">Female</label>
+                    <input type="number" id="femaleCount" min="0" value="0" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                </div>
+                <div class="relative group">
+                    <label for="childrenCount" class="block text-sm font-medium text-gray-700 mb-2">Children</label>
+                    <input type="number" id="childrenCount" min="0" value="0" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                </div>
+            </div>
+
+            <!-- Other Numbers -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="relative group">
+                    <label for="mvpPresent" class="block text-sm font-medium text-gray-700 mb-2">MVP Present</label>
+                    <input type="number" id="mvpPresent" min="0" value="0" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                </div>
+                <div class="relative group">
+                    <label for="soulsWon" class="block text-sm font-medium text-gray-700 mb-2">Soul Won</label>
+                    <input type="number" id="soulsWon" min="0" value="0" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                </div>
+            </div>
+
+            <!-- Offering -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="relative group">
+                    <label for="offeringCash" class="block text-sm font-medium text-gray-700 mb-2">Offering (Cash)</label>
+                    <input type="number" id="offeringCash" min="0" value="0" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                </div>
+                <div class="relative group">
+                    <label for="offeringTransfer" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">Offering (Transfer)</label>
+                    <input type="number" id="offeringTransfer" min="0" value="0" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                </div>
+            </div>
+
+            <!-- Treasurer -->
+            <div class="relative group">
+                <label for="treasurer" class="block text-sm font-medium text-gray-700 mb-2">Treasurer / Handling Cash</label>
+                <input type="text" id="treasurer" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+            </div>
+
+            <!-- Goals -->
+            <div class="relative group">
+                <label for="goals" class="block text-sm font-medium text-gray-700 mb-2">Goals for the next meeting</label>
+                <textarea id="goals" rows="3" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"></textarea>
+            </div>
+
+            <!-- Did you meet your GOALS? -->
+            <div class="relative group">
+                <label for="metGoals" class="block text-sm font-medium text-gray-700 mb-2">Did you meet your GOALS for the week?</label>
+                <select id="metGoals" class="block w-full px-4 py-2 text-base text-gray-900 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300">
+                    <option value="" selected disabled>Select an option</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                    <option value="Partially">Partially</option>
+                </select>
+            </div>
+            
+        </form>
+    </div>
+
+    <script>
+        // Data structure representing the provided information.
+        // The data is organized hierarchically for easy access.
+        const careData = {
+            "Barr.Donald Ikebude (Cmd Over Achakpo/Ojo Road)": {
+                "Ese Sese Atina": {
+                    "House Of Peace 1": "Geouey",
+                    "House Of Peace 2": "79 Goriola Street"
+                },
+                "Miss Mary Peter": {
+                    "Spring Of Light": "55 Iyalode Street",
+                    "Spring Of Light Care Center": "54 Iyalode Street Ajegunle"
+                },
+                "Chukwu Chisom": {
+                    "Ojo Road Cell Branch Two": "17 Agbeke Street, Off Ojo Road",
+                    "Ojo Road Cell Division 2": "17 Agbeke Street Ojo Road"
+                },
+                "Clara Nkwocha": {
+                    "Shammah'S House Care Centre": "30/80 Uzor Street",
+                    "Shammah’S House": "30/80 Uzor Street"
+                },
+                "Christian Edoziem": {
+                    "Glorious Cell": "61 Mba Street",
+                    "Glorious Cell at Ajegunle": "61 Mba Street Ajegunle Apapa Lagos"
+                },
+                "Misheal Nwobodo": {
+                    "Bethel 1": "54 Uzor Street"
+                },
+                "Mary Peter": {
+                    "Spring Of Light": "54 Iyalode"
+                },
+                "Ebube Paul": {
+                    "Bethel 2": "143 Uzor"
+                },
+                "Winner Jack": {
+                    "Ojo Road Care Center": "50 Ojo Road"
+                },
+                "Rachael Etinagbedia": {
+                    "House Of Peace 1": "29B, Aduba Close, Off Peter Street"
+                },
+                "Frank Anasonwu": {
+                    "Glory Cell": "23 Opaleye Street"
+                }
+            },
+            "Chikodi Okorie (Cmd Over Oregie)": {
+                "Chikodi Okorie": {
+                    "Goshen Care Centre": "80, Uzor Street, Ajegunle, Lagos",
+                    "Goshen 1": "80 Uzor Street Ajegunle"
+                },
+                "Prosper Ogbuja": {
+                    "Yahweh": "181B Uzor Street",
+                    "Goshen": "80 Uzor Street"
+                },
+                "Precious Nwafor": {
+                    "Grace Haven": "Bethel Place Beside Rolex School"
+                },
+                "Samson Onukurefe": {
+                    "Citadel Care Center": "84,Uzor Street",
+                    "Citadel": "84 Uzor Street"
+                },
+                "Gabriel Jimoh": {
+                    "Lionstribe": "16 Canal Road Oriege"
+                },
+                "Blessing Bartholomew": {
+                    "Koinonia Care Center": "3 Otakoya Street",
+                    "Koinonia": "3 Otakoya Street"
+                },
+                "Ebuka Ogbuja": {
+                    "Goshen 2": "46, Taiwo Street"
+                }
+            },
+            "Pst. Martins Ogbuja (Cmd Over Tolu/Ajasa)": {
+                "Daniella Edeh": {
+                    "Engraced Tribe": "53, Taiwo Street"
+                },
+                "Godswill Nwosu": {
+                    "Oasis Cell": "13 College Road"
+                },
+                "Gabriel Anthony": {
+                    "God'S Breed": "69 Fasasi Street Olodi-Apapa",
+                    "God'S Breed Care Centre": "69 Fasasi Street Olodi-Apapa Lagos"
+                },
+                "Naomi Echefu": {
+                    "Peniel": "03 Ladega",
+                    "Peniel at Ladega": "3 Ladega Street"
+                },
+                "Wisdom Anyia": {
+                    "Krainos Care Center": "No 32 Idi Street",
+                    "Kainos": "20 Idi Street Ajegunle Apapa Lagos"
+                },
+                "Daniel Utodio": {
+                    "David'S Tribe": "34, Olowosu Street",
+                    "David'S Tribe at Olowosu": "34 Olowosu Street"
+                },
+                "Nnabuihe Bright Ihuoma": {
+                    "House Of Prayer": "64 Lawani Street Olodi Apapa Lagos"
+                },
+                "Arinze Ifeanyi": {
+                    "God’S Power House": "1 Layode Street"
+                }
+            },
+            "P. Rita Iheanyi (Cmd Over Ago/Bucknor)": {
+                "Nzekwe Kingsley": {
+                    "Bucknor": "2 Ifechukwu Street Bocknor"
+                },
+                "Sis Ngozi": {
+                    "Overcomers": "No 6 Ladisa Crescent, Apple Estate, Amuwo Odofin"
+                }
+            },
+            "P.Joshua Kelechi (Cmd Over Wilmer/Coconut)": {
+                "BlessingAkogwu": {
+                    "Akogun Street": "Akogun Street"
+                },
+                "Success Akanno": {
+                    "Holy Nation": "39 Ben Onyeka Street",
+                    "Gospel World": "13 Briemo Street"
+                },
+                "Moses Anthony": {
+                    "Shining Light": "21 Salawu Street",
+                    "Shinning Light": "21 Salawu Street"
+                },
+                "Kosi Paul": {
+                    "Hassanah Cell 2": "25 Babatunde Street",
+                    "Hosannah Cell 2": "32 Babatunde"
+                },
+                "Michael Iheakachi": {
+                    "Hosanna Cell": "10 Jones Waribi Street"
+                },
+                "Faith Joseph": {
+                    "Holy Nation": "39, Ben Onyeka Street"
+                }
+            }
+        };
+
+        // Get dropdown elements from the DOM
+        const cmdCareSelect = document.getElementById('cmdCare');
+        const pastorCareSelect = document.getElementById('pastorCare');
+        const careCenterNameSelect = document.getElementById('careCenterName');
+        const addressDisplay = document.getElementById('addressDisplay');
+        const addressText = document.getElementById('addressText');
+
+        // Function to populate a dropdown with options
+        function populateDropdown(selectElement, options) {
+            // Clear existing options
+            selectElement.innerHTML = '';
+            // Add a default placeholder option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.text = `Select ${selectElement.previousElementSibling.textContent}`;
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            selectElement.appendChild(defaultOption);
+
+            // Add new options from the provided array
+            options.forEach(option => {
+                const newOption = document.createElement('option');
+                newOption.value = option;
+                newOption.text = option;
+                selectElement.appendChild(newOption);
+            });
+            // Re-enable the dropdown
+            selectElement.disabled = false;
+        }
+
+        // --- Event Listeners ---
+        
+        // 1. Populate the initial CMDCare dropdown on page load
+        window.onload = () => {
+            const cmdCareOptions = Object.keys(careData);
+            populateDropdown(cmdCareSelect, cmdCareOptions);
+        };
+        
+        // 2. Listen for changes on the CMDCare dropdown
+        cmdCareSelect.addEventListener('change', (e) => {
+            const selectedCmdCare = e.target.value;
+            // Get the pastors for the selected CMDCare
+            const pastorOptions = Object.keys(careData[selectedCmdCare]);
+            // Populate the next dropdown
+            populateDropdown(pastorCareSelect, pastorOptions);
+            
+            // Reset subsequent dropdowns and address display
+            careCenterNameSelect.innerHTML = '<option value="" selected disabled>Select Care Center Name</option>';
+            careCenterNameSelect.disabled = true;
+            addressDisplay.classList.remove('scale-100', 'opacity-100');
+            addressDisplay.classList.add('scale-95', 'opacity-0');
+        });
+
+        // 3. Listen for changes on the PastorCare dropdown
+        pastorCareSelect.addEventListener('change', (e) => {
+            const selectedCmdCare = cmdCareSelect.value;
+            const selectedPastor = e.target.value;
+            
+            // Get the care center names for the selected Pastor
+            const careCenterOptions = Object.keys(careData[selectedCmdCare][selectedPastor]);
+            // Populate the next dropdown
+            populateDropdown(careCenterNameSelect, careCenterOptions);
+            
+            // Reset address display
+            addressDisplay.classList.remove('scale-100', 'opacity-100');
+            addressDisplay.classList.add('scale-95', 'opacity-0');
+        });
+
+        // 4. Listen for changes on the Care Center Name dropdown
+        careCenterNameSelect.addEventListener('change', (e) => {
+            const selectedCmdCare = cmdCareSelect.value;
+            const selectedPastor = pastorCareSelect.value;
+            const selectedCareCenter = e.target.value;
+            
+            // Get the address for the selected Care Center
+            const address = careData[selectedCmdCare][selectedPastor][selectedCareCenter];
+            
+            // Display the address
+            addressText.textContent = address;
+            addressDisplay.classList.remove('scale-95', 'opacity-0');
+            addressDisplay.classList.add('scale-100', 'opacity-100');
+        });
+    </script>
+
+</body>
+</html>
